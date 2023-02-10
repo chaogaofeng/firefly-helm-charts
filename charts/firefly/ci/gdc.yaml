@@ -1,0 +1,84 @@
+postgresql: 
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: alicloud-nas-subpath
+    size: 10Gi
+
+ipfs: 
+  enabled: true
+  swarmKey: |-
+    /key/swarm/psk/1.0.0/
+    /base16/
+    f5b00a724db6896b7472ae249b2b7c0fcd53ff9f6baa91a800d017f4c389569b
+  bootstrap:
+  persistence:
+    enabled: true
+    storageClass: alicloud-nas-subpath
+    size: 10Gi
+
+gnchaind: 
+  enable: true
+
+dataexchange:
+  enabled: true
+  image:
+    tag: latest
+  tlsSecret:
+    enabled: false
+  certificate:
+    enabled: true
+    issuerRef:
+      name: selfsigned-ca
+      kind: ClusterIssuer  
+  persistentVolumes:
+    peers:
+      storageClass: alicloud-nas-subpath
+      size: 1Gi
+    blobs:
+      storageClass: alicloud-nas-subpath
+      size: 1Gi
+
+evmconnect:
+  enabled: true
+  image:
+    tag: latest
+  config:
+    jsonRpcUrl: http://gdc-gnchain-gnchaind.gdc.svc.cluster.local:8545
+  persistentVolume:
+    storageClass: alicloud-nas-subpath
+    size: 1Gi
+
+erc20erc721:
+  enabled: false
+  image:
+    tag: latest
+
+sandbox:
+  enabled: false
+  image:
+    tag: latest
+
+core:
+  image:
+    tag: latest
+  jobs:
+    # Whether to create a migration job to perform migrations each time a new tag is pushed for the FireFly image (supports DB creation)
+    postgresMigrations:
+      enabled: true
+    registration:
+      enabled: true
+
+config:
+  debugEnabled: true
+  
+  organizationName: "org-hx"
+  organizationKey: "0xA1A8CB42773321D661F8E590136231CF9BD28999"
+  fireflyContractAddress: "0x26ee0839e117963795e069675d3d40792ffbe498"
+
+
+  # postgresUrl: ""
+  # ipfsApiUrl: ""
+  # ipfsGatewayUrl: ""
+  # dataexchangeUrl: ""
+  # evmconnectUrl: ""

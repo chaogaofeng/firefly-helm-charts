@@ -177,7 +177,7 @@ Config helpers
 {{- if .Values.dataexchange.ingress.enabled }}
 {{- (index .Values.dataexchange.ingress.hosts 0).host }}
 {{- else }}
-{{- printf "%s-dx.%s.svc:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.dataexchange.service.p2pPort | int64) }}
+{{- printf "%s-dx.%s.svc.cluster.local:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.dataexchange.service.p2pPort | int64) }}
 {{- end }}
 {{- end }}
 
@@ -189,12 +189,12 @@ Config helpers
 {{- printf "http://%s" (index .Values.core.ingress.hosts 0).host }}
 {{- end }}
 {{- else }}
-{{- printf "http://%s.%s.svc:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.core.service.httpPort | int64) }}
+{{- printf "http://%s.%s.svc.cluster.local:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.core.service.httpPort | int64) }}
 {{- end }}
 {{- end }}
 
 {{- define "firefly.coreAdminPublicURL" -}}
-{{- printf "http://%s.%s.svc:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.core.service.adminPort | int64) }}
+{{- printf "http://%s.%s.svc.cluster.local:%d" (include "firefly.fullname" .) .Release.Namespace (.Values.core.service.adminPort | int64) }}
 {{- end }}
 
 {{- define "firefly.coreConfig" -}}
@@ -240,7 +240,7 @@ plugins:
       ethereum:
         ethconnect:
           {{ if .Values.ethconnect.enabled }}
-          url: http://{{ include "firefly.fullname" . }}-ethconnect.{{ .Release.Namespace }}.svc:{{ .Values.ethconnect.service.apiPort }}
+          url: http://{{ include "firefly.fullname" . }}-ethconnect.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ethconnect.service.apiPort }}
           {{ else }}
           url: {{ tpl .Values.config.ethconnectUrl . }}
           {{ end }}
@@ -268,7 +268,7 @@ plugins:
       ethereum:
         ethconnect:
           {{- if .Values.evmconnect.enabled }}
-          url: http://{{ include "firefly.fullname" . }}-evmconnect.{{ .Release.Namespace }}.svc:{{ .Values.evmconnect.service.port }}
+          url: http://{{ include "firefly.fullname" . }}-evmconnect.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.evmconnect.service.port }}
           {{- end }}
           topic: {{ .Values.config.evmconnectTopic | quote }}
           retry:
@@ -305,7 +305,14 @@ plugins:
     {{- tpl .Values.config.databaseOverride . | nindent 4 }}
   {{- else }}
   database:
-  {{- if .Values.config.postgresUrl }}
+  {{- if .Values.postgresql.enabled }}
+    - name: database0
+      type: postgres
+      postgres:
+        url: postgres://{{ .Values.postgresql.postgresql.username }}:{{ .Values.postgresql.postgresql.password }}@{{ include "firefly.fullname" . }}-postgresql.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgresql.postgresql.port }}/{{ .Values.postgresql.postgresql.database }}?sslmode=disable
+        migrations:
+          auto: {{ .Values.config.postgresAutomigrate }}
+  {{- else if .Values.config.postgresUrl }}
     - name: database0
       type: postgres
       postgres:
@@ -322,7 +329,25 @@ plugins:
     {{- tpl .Values.config.sharedstorageOverride . | nindent 4 }}
   {{- else }}
   sharedstorage:
-  {{- if and .Values.config.ipfsApiUrl .Values.config.ipfsGatewayUrl }}
+  {{- if .Values.ipfs.enabled }}
+    - name: sharedstorage0
+      type: ipfs
+      ipfs:
+        api:
+          url: http://{{ include "firefly.fullname" . }}-ipfs.{{ .Release.Namespace }}.svc.cluster.local:5001
+          {{- if and .Values.ipfs.apiUsername .Values.ipfs.apiPassword }}
+          auth:
+            username: {{ .Values.ipfs.apiUsername |quote }}
+            password:  {{ .Values.ipfs.apiPassword | quote }}
+          {{- end }}
+        gateway:
+          url: http://{{ include "firefly.fullname" . }}-ipfs.{{ .Release.Namespace }}.svc.cluster.local:8080
+          {{- if and .Values.ipfs.gatewayUsername .Values.ipfs.gatewayPassword }}
+          auth:
+            username: {{ .Values.ipfs.gatewayUsername | quote }}
+            password: {{ .Values.ipfs.gatewayPassword | quote }}
+          {{- end }}
+  {{- else if and .Values.config.ipfsApiUrl .Values.config.ipfsGatewayUrl }}
     - name: sharedstorage0
       type: ipfs
       ipfs:
@@ -354,7 +379,7 @@ plugins:
     - type: ffdx
       name: dataexchange0
       ffdx:
-        url: http://{{ include "firefly.fullname" . }}-dx.{{ .Release.Namespace }}.svc:{{ .Values.dataexchange.service.apiPort }}
+        url: http://{{ include "firefly.fullname" . }}-dx.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.dataexchange.service.apiPort }}
         {{- if .Values.dataexchange.apiKey }}
         headers:
           x-api-key: {{ .Values.dataexchange.apiKey | quote }}
@@ -384,14 +409,14 @@ plugins:
       name: erc1155
       remoteName: erc1155
       fftokens:
-        url: http://{{ include "firefly.fullname" . }}-erc1155.{{ .Release.Namespace }}.svc:{{ .Values.erc1155.service.port }}
+        url: http://{{ include "firefly.fullname" . }}-erc1155.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.erc1155.service.port }}
     {{- end }}
     {{- if .Values.erc20erc721.enabled }}
     - type: fftokens
       name: erc20-erc721
       remoteName: erc20-erc721
       fftokens:
-        url: http://{{ include "firefly.fullname" . }}-erc20-erc721.{{ .Release.Namespace }}.svc:{{ .Values.erc20erc721.service.port }}
+        url: http://{{ include "firefly.fullname" . }}-erc20-erc721.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.erc20erc721.service.port }}
     {{- end }}
   {{- end }}
   {{- end }}
@@ -469,9 +494,9 @@ namespaces:
 {{- define "firefly.ethconnectUrlEnvVar" -}}
 - name: ETHCONNECT_URL
 {{- if .Values.ethconnect.enabled }}
-  value: "http://{{ include "firefly.fullname" . }}-ethconnect.{{ .Release.Namespace }}.svc:{{ .Values.ethconnect.service.apiPort }}"
+  value: "http://{{ include "firefly.fullname" . }}-ethconnect.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.ethconnect.service.apiPort }}"
 {{- else if .Values.evmconnect.enabled }}
-  value: "http://{{ include "firefly.fullname" . }}-evmconnect.{{ .Release.Namespace }}.svc:{{ .Values.evmconnect.service.port }}"
+  value: "http://{{ include "firefly.fullname" . }}-evmconnect.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.evmconnect.service.port }}"
 {{- else if .Values.config.ethconnectUrl }}
   value: {{ tpl .Values.config.ethconnectUrl . }}
 {{- else }}

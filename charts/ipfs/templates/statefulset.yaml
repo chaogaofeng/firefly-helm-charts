@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "ipfs.fullname" . }}
+  labels:
+    {{- include "ipfs.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "ipfs.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "ipfs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ipfs.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if and .Values.swarmKey .Values.bootstrap }}
+      initContainers:
+      - name: {{ .Chart.Name }}-init
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
+        env:
+        - name: IPFS_BOOTSTRAP
+          value: {{ .Values.bootstrap | quote }}
+        command:
+          - sh
+          - -ce
+          - |
+            #!/bin/sh
+            ipfs init
+            ipfs bootstrap rm --all
+            if [ -n "${IPFS_BOOTSTRAP}" ]
+            then
+              echo "bootstrap" ${IPFS_BOOTSTRAP}
+              ipfs bootstrap add ${IPFS_BOOTSTRAP}
+            fi
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+        env:
+        {{- if .Values.swarmKey }}
+        - name: IPFS_SWARM_KEY
+          value: {{ .Values.swarmKey | quote }}
+        - name: LIBP2P_FORCE_PNET
+          value: "1"
+        {{- end }}
+        {{- if .Values.extraEnv }}
+          {{- toYaml .Values.extraEnv | nindent 12 }}
+        {{- end }}
+        ports:
+{{- if .Values.swarm.enabled }}
+        - containerPort: 4001
+          name: swarm
+{{- end }}
+        - containerPort: 5001
+          name: api
+        - containerPort: 8080
+          name: gateway
+        volumeMounts:
+          - name: ipfs-storage
+            mountPath: /data/ipfs
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /debug/metrics/prometheus
+            port: api
+          initialDelaySeconds: 15
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /debug/metrics/prometheus
+            port: api
+          initialDelaySeconds: 15
+          periodSeconds: 3
+
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: ipfs-storage
+        {{- range $key, $value := .Values.persistence.annotations }}
+          {{ $key }}: {{ $value }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- range .Values.persistence.accessModes }}
+          - {{ . | quote }}
+          {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+      {{- if .Values.persistence.storageClass }}
+      {{- if (eq "-" .Values.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+  {{- else }}
+      volumes:
+        - name: ipfs-storage
+          emptyDir: {}
+  {{- end }}

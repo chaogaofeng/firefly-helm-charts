@@ -2,5 +2,11 @@ dependencies:
 - name: firefly-evmconnect
   repository: file://../firefly-evmconnect
   version: 0.6.0
-digest: sha256:b99b626107ed5cdd1c1e5a67ed5c138bf02a7882cb5a266306946b0cc1de9d62
-generated: "2022-08-23T09:06:26.833062-04:00"
+- name: postgresql
+  repository: file://../postgresql
+  version: 0.2.3
+- name: ipfs
+  repository: file://../ipfs
+  version: 0.3.4
+digest: sha256:f5f298b17112b3b4279dfb518203f6e549af9c3c7a2c045c2bf86016ef57895b
+generated: "2023-02-09T14:46:35.282246+08:00"

@@ -34,7 +34,7 @@ persistentVolume:
   storageClass: ""
 
 image:
-  repository: ghcr.io/hyperledger/firefly-evmconnect
+  repository: glodnet/gdc-evmconnect
   pullPolicy: IfNotPresent
   # tag: ""
 

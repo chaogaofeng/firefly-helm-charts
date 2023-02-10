@@ -1,0 +1,11 @@
+image:
+  tag: latest
+config:
+  jsonRpcUrl: http://gdc-gnchain-gnchaind.gdc.svc.cluster.local:8545
+persistentVolume:
+  storageClass: alicloud-nas-subpath
+  size: 1Gi
+job:
+  registerContracts:
+    enabled: true
+    from: 0xA1A8CB42773321D661F8E590136231CF9BD28999

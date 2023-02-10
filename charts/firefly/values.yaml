@@ -203,7 +203,7 @@ config:
 # Configures the properties of the StatefulSet, Service, and optionally Ingress used to deploy and expose FireFly
 core:
   image:
-    repository: ghcr.io/hyperledger/firefly
+    repository: glodnet/gdc-core
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     # tag: ""
@@ -326,7 +326,7 @@ dataexchange:
     #   value: DEBUG
 
   image:
-    repository: ghcr.io/hyperledger/firefly-dataexchange-https
+    repository: glodnet/gdc-dataexchange-https
     pullPolicy: IfNotPresent
     tag: v1.1.0
 
@@ -409,7 +409,7 @@ erc1155:
   ethconnectTopic: "tokensERC1155"
 
   image:
-    repository: ghcr.io/hyperledger/firefly-tokens-erc1155
+    repository: glodnet/gdc-tokens-erc1155
     pullPolicy: IfNotPresent
     tag: v1.1.5
 
@@ -467,7 +467,7 @@ erc20erc721:
     tokenName: "FF"
 
   erc721:
-    enabled: false
+    enabled: true
 
     # The name and symbol to use when instantiating the ERC721 tokens contract
     tokenName: "NFFT"
@@ -483,7 +483,7 @@ erc20erc721:
       enabled: true
 
   image:
-    repository: ghcr.io/hyperledger/firefly-tokens-erc20-erc721
+    repository: glodnet/gdc-tokens-erc20-erc721
     pullPolicy: IfNotPresent
     tag: v1.1.4
 
@@ -566,7 +566,7 @@ ethconnect:
     # runAsUser: 1000
 
   image:
-    repository: ghcr.io/hyperledger/firefly-ethconnect
+    repository: glodnet/gdc-ethconnect
     pullPolicy: Always
     tag: v3.2.7
 
@@ -624,7 +624,7 @@ sandbox:
   imagePullSecrets: []
 
   image:
-    repository: ghcr.io/hyperledger/firefly-sandbox
+    repository: glodnet/gdc-sandbox
     pullPolicy: IfNotPresent
     tag: v1.1.1
 
@@ -655,4 +655,13 @@ sandbox:
   affinity: {}
 
 evmconnect:
+  nameOverride: firefly-evmconnect
+  enabled: false
+
+postgresql:
+  nameOverride: firefly-postgresql
+  enabled: false
+
+ipfs:
+  nameOverride: firefly-ipfs
   enabled: false

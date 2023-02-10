@@ -40,9 +40,9 @@ spec:
         - -ce
         - |
 {{ .Files.Get "scripts/ff-db-migrations.sh" | indent 10 }}
-        {{- if or .Values.config.postgresUrl .Values.core.jobs.postgresMigrations.extraEnv }}
+        {{- if or .Values.config.postgresUrl .Values.postgresql.enabled .Values.core.jobs.postgresMigrations.extraEnv }}
         env:
-          {{- if .Values.config.postgresUrl }}
+          {{- if or .Values.config.postgresUrl .Values.postgresql.enabled }}
           - name: PSQL_URL
             valueFrom:
               secretKeyRef:

@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "firefly-evmconnect.name" -}}
+{{- define "ipfs.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "firefly-evmconnect.fullname" -}}
+{{- define "ipfs.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "firefly-evmconnect.chart" -}}
+{{- define "ipfs.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "firefly-evmconnect.labels" -}}
-helm.sh/chart: {{ include "firefly-evmconnect.chart" . }}
-{{ include "firefly-evmconnect.selectorLabels" . }}
+{{- define "ipfs.labels" -}}
+helm.sh/chart: {{ include "ipfs.chart" . }}
+{{ include "ipfs.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,12 +45,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "firefly-evmconnect.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "firefly-evmconnect.name" . }}
+{{- define "ipfs.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "ipfs.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: evmconnect
-{{- end }}
-
-{{- define "firefly-evmconnect.registerContractsJobName" -}}
-{{ printf "%s-%s-register-contracts" (include "firefly-evmconnect.fullname" .) .Chart.Version | trunc 63 | trimSuffix "-" }}
+app.kubernetes.io/component: ipfs
 {{- end }}

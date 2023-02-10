@@ -1,0 +1,35 @@
+{{- $name := include "ipfs.name" . -}}
+{{- $fullname := include "ipfs.fullname" . -}}
+{{- $servicename := include "ipfs.fullname" . -}}
+
+{{- if .Values.ingressGateway.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    app: {{ $name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  name: {{ $fullname }}-gateway
+  annotations:
+          {{- range $key, $value := .Values.ingressGateway.annotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+spec:
+  rules:
+  {{- range .Values.ingressGateway.hosts }}
+  {{- $url := splitList "/" . }}
+  - host: {{ first $url }}
+    http:
+      paths:
+        - path: /{{ rest $url | join "/" }}
+          backend:
+            serviceName: {{ $servicename }}
+            servicePort: 8080
+  {{- end -}}
+  {{- if .Values.ingressGateway.tls }}
+  tls:
+  - hosts: {{ toJson .Values.ingressGateway.tls }}
+  {{- end -}}
+  {{- end -}}
